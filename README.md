@@ -48,21 +48,21 @@ Terraform is used to provision and manage the AWS infrastructure
 ##🛠️ Technology Stack
 
 
-AWS
-Amazon ECS Fargate
-Amazon ECR
-Application Load Balancer
-Amazon CloudWatch
-Terraform
-Jenkins
-Docker
-Git & GitHub
-Python
-Flask
-Pytest
+-AWS
+-Amazon ECS Fargate
+-Amazon ECR
+-Application Load Balancer
+-Amazon CloudWatch
+-Terraform
+-Jenkins
+-Docker
+-Git & GitHub
+-Python
+-Flask
+-Pytest
 
 
-#⚙️ CI/CD Workflow
+##⚙️ CI/CD Workflow
 
 The deployment workflow is:
 
@@ -97,7 +97,7 @@ Application Verification
 
 A push to the main branch triggers the Jenkins pipeline.
 
-# Jenkins Pipeline
+## Jenkins Pipeline
 
 The Jenkins pipeline contains the following stages:
 
@@ -109,7 +109,7 @@ Deploy to ECS
 
 The pipeline automatically builds and deploys a new application version without requiring manual deployment commands.
 
-# Automated Testing
+## Automated Testing
 
 Before deployment, Jenkins runs the application's automated tests using Pytest.
 
@@ -117,7 +117,7 @@ If the tests fail, the pipeline stops and the deployment does not proceed.
 
 This provides a basic quality gate before the application is deployed to AWS.
 
-# Docker
+## Docker
 
 The Flask application is packaged into a Docker container.
 
@@ -131,7 +131,7 @@ The image is then pushed to Amazon ECR.
 
 This provides traceability between a Jenkins build and the container image deployed to ECS.
 
-# Amazon ECR
+## Amazon ECR
 
 Amazon Elastic Container Registry (ECR) is used as the private container registry for AutoDeployX.
 
@@ -146,7 +146,7 @@ Example:
 480749290130.dkr.ecr.us-east-1.amazonaws.com/autodeployx:build-9
 
 
-# Amazon ECS Fargate
+GitHub: https://github.com/tnmanikandan77-collab/autodeployx# Amazon ECS Fargate
 
 The application runs as a service on Amazon ECS using Fargate.
 
