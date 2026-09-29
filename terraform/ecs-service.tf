@@ -63,5 +63,8 @@ resource "aws_ecs_service" "autodeployx" {
     Project     = "AutoDeployX"
     Environment = "dev"
   }
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
 }
 
