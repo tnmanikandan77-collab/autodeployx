@@ -1,10 +1,15 @@
+# Python
 venv/
 __pycache__/
-.pytest_cache/
 *.pyc
-.env
 
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.*
-terraform/*.tfvars
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Environment / secrets
+.env
+*.pem
