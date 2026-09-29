@@ -1,191 +1,368 @@
 # 🚀 AutoDeployX – Self-Healing AWS Deployment Platform
 
-AutoDeployX is an automated DevOps deployment platform built using AWS, Jenkins, Docker, Terraform, and Amazon ECS Fargate.
+AutoDeployX is a DevOps project that demonstrates an automated application deployment workflow using AWS, Jenkins, Docker, Terraform, and Amazon ECS Fargate.
 
-The project demonstrates an end-to-end CI/CD workflow with automated testing, containerization, cloud deployment, monitoring, auto scaling, and self-healing.
+The project combines CI/CD automation, containerization, Infrastructure as Code, application monitoring, auto scaling, and ECS task recovery into a single deployment workflow.
 
 ---
 
 ## 🏗️ Architecture
 
-GitHub → Jenkins → Docker → Amazon ECR → Amazon ECS Fargate → Application Load Balancer → Application
+```text
+Developer
+    |
+    v
+GitHub
+    |
+    v
+Jenkins (EC2)
+    |
+    +--> Automated Tests
+    |
+    +--> Docker Build
+    |
+    v
+Amazon ECR
+    |
+    v
+Amazon ECS Fargate
+    |
+    v
+Application Load Balancer
+    |
+    v
+Flask Application
+    |
+    +--> /health
+    |
+    +--> /version
 
-Terraform is used to provision and manage the AWS infrastructure, while Amazon CloudWatch provides monitoring, logs, metrics, and alarms.
+Amazon CloudWatch
+    |
+    +--> Logs
+    +--> CPU Metrics
+    +--> Memory Metrics
+    +--> Alarms
+Terraform is used to provision and manage the AWS infrastructure
 
----
+##🛠️ Technology Stack
 
-## 🛠️ Technology Stack
 
-- AWS
-- Amazon ECS Fargate
-- Amazon ECR
-- Application Load Balancer
-- Amazon CloudWatch
-- Terraform
-- Jenkins
-- Docker
-- Git & GitHub
-- Python / Flask
-- Pytest
+AWS
+Amazon ECS Fargate
+Amazon ECR
+Application Load Balancer
+Amazon CloudWatch
+Terraform
+Jenkins
+Docker
+Git & GitHub
+Python
+Flask
+Pytest
 
----
 
-## ⚙️ CI/CD Workflow
+#⚙️ CI/CD Workflow
 
-1. Developer pushes code to GitHub.
-2. Jenkins detects the GitHub push.
-3. Jenkins checks out the source code.
-4. Automated tests are executed.
-5. Docker image is built.
-6. Docker image is tagged using the Jenkins build number.
-7. Image is pushed to Amazon ECR.
-8. Jenkins registers a new ECS task definition.
-9. ECS service is updated with the new task definition.
-10. ECS waits for the service to become stable.
-11. Application is verified through health and version endpoints.
+The deployment workflow is:
 
----
+GitHub Push
+     |
+     v
+Jenkins
+     |
+     v
+Checkout
+     |
+     v
+Automated Tests
+     |
+     v
+Docker Build
+     |
+     v
+Push Image to ECR
+     |
+     v
+Register ECS Task Definition
+     |
+     v
+Update ECS Service
+     |
+     v
+Wait for ECS Stability
+     |
+     v
+Application Verification
 
-## 🔄 Jenkins Pipeline
+A push to the main branch triggers the Jenkins pipeline.
+
+# Jenkins Pipeline
 
 The Jenkins pipeline contains the following stages:
 
-- Checkout
-- Test
-- Docker Build
-- Push to ECR
-- Deploy to ECS
+Checkout
+Test
+Docker Build
+Push to ECR
+Deploy to ECS
 
-This automates the complete application deployment process.
+The pipeline automatically builds and deploys a new application version without requiring manual deployment commands.
 
----
+# Automated Testing
 
-## 🐳 Docker
+Before deployment, Jenkins runs the application's automated tests using Pytest.
 
-The Python Flask application is containerized using Docker.
+If the tests fail, the pipeline stops and the deployment does not proceed.
 
-Docker images are tagged using the Jenkins build number, providing traceability between CI/CD builds and deployed versions.
+This provides a basic quality gate before the application is deployed to AWS.
+
+# Docker
+
+The Flask application is packaged into a Docker container.
+
+Docker images are tagged using the Jenkins build number.
 
 Example:
 
-`build-9`
+autodeployx:build-9
 
----
+The image is then pushed to Amazon ECR.
 
-## ☁️ AWS Infrastructure
+This provides traceability between a Jenkins build and the container image deployed to ECS.
 
-Terraform provisions and manages:
+# Amazon ECR
 
-- VPC
-- Public and private subnets
-- Security groups
-- Application Load Balancer
-- ECS cluster
-- ECS service
-- ECS task definition
-- ECR repository
-- IAM roles
-- CloudWatch log group
-- CloudWatch alarms
-- ECS auto scaling
+Amazon Elastic Container Registry (ECR) is used as the private container registry for AutoDeployX.
 
----
+The Jenkins pipeline:
 
-## 🚀 ECS Fargate Deployment
+Authenticates with ECR.
+Tags the Docker image.
+Pushes the image to the ECR repository.
 
-The application runs on Amazon ECS Fargate.
+Example:
 
-The ECS service maintains a desired count of 2 tasks under normal conditions.
+480749290130.dkr.ecr.us-east-1.amazonaws.com/autodeployx:build-9
 
-Auto scaling is configured to scale the service between 2 and 4 tasks based on resource utilization.
 
----
+# Amazon ECS Fargate
 
-## 🔍 Application Verification
+The application runs as a service on Amazon ECS using Fargate.
+
+The ECS service is configured with:
+
+Desired task count: 2
+Minimum tasks: 2
+Maximum tasks: 4
+Application container port: 8080
+
+The Application Load Balancer distributes traffic across healthy ECS tasks.
+
+
+
+# Application Verification
 
 The application exposes health and version endpoints.
 
-### Health Check
+Health Check
+GET /health
 
-`GET /health`
+Example response:
 
-```json
 {
   "status": "healthy"
 }
+Version Check
+GET /version
 
-#Version Check
-
-#GET /version
+Example response:
 
 {
   "application": "AutoDeployX",
   "version": "2.0.0"
 }
 
-#Monitoring
+These endpoints were used to verify that the deployed application was healthy and running the expected version.
 
-Amazon CloudWatch is used for:
+
+
+# Application Load Balancer
+
+The Application Load Balancer provides the public HTTP entry point for the application.
+
+Traffic is distributed to healthy ECS tasks running the Flask application on port 8080.
+
+The ALB health check uses the application's /health endpoint.
+
+
+
+# CloudWatch Monitoring
+
+Amazon CloudWatch is used for application and ECS monitoring.
+
+The project includes:
 
 ECS application logs
-CPU utilization
-Memory utilization
-ECS service monitoring
-CPU alarms
-Memory alarms
+CPU utilization metrics
+Memory utilization metrics
+ECS service metrics
+CPU utilization alarm
+Memory utilization alarm
 
-CloudWatch provides visibility into the health and performance of the deployed service.
+Application logs are stored in:
 
-#🛡️ Self-Healing
+/ecs/autodeployx
 
-AutoDeployX demonstrates ECS self-healing through automatic task replacement.
+CloudWatch provides visibility into application activity and resource utilization.
+
+
+
+# ECS Auto Scaling
+
+ECS Service Auto Scaling is configured to adjust the number of running tasks based on resource utilization.
+
+The service can scale between:
+
+Minimum: 2 tasks
+Maximum: 4 tasks
+
+CPU utilization is used as a scaling signal.
+
+This allows the application capacity to increase when workload demand increases.
+
+# Self-Healing
+
+One of the key demonstrations of AutoDeployX is ECS automatic task replacement.
 
 During testing, a running ECS task was intentionally stopped.
 
-The ECS service temporarily changed from:
+Before failure:
 
-Desired: 2 | Running: 1
+Desired: 2
+Running: 2
 
-ECS automatically detected that the service was below the desired capacity and launched a replacement task.
+After intentionally stopping one task:
 
-The service returned to:
+Desired: 2
+Running: 1
 
-Desired: 2 | Running: 2
+ECS detected that the service was below its desired task count and automatically launched a replacement task.
 
-This demonstrates automatic workload recovery without manually launching a replacement container.
+After recovery:
 
-#🧪 Testing
+Desired: 2
+Running: 2
 
-Automated application tests are executed during the Jenkins pipeline before the Docker image is built.
+This demonstrates ECS service-level self-healing through automatic task replacement without manually launching a replacement container.
 
-If the tests fail, the pipeline stops and the deployment does not proceed.
+# Infrastructure as Code
+
+Terraform is used to provision and manage the AWS infrastructure.
+
+The Terraform configuration manages resources including:
+
+VPC
+Public subnets
+Private subnets
+Internet Gateway
+Route tables
+Security groups
+Application Load Balancer
+ECS cluster
+ECS service
+ECS task definition
+ECR repository
+IAM roles
+Jenkins EC2 infrastructure
+CloudWatch log group
+CloudWatch alarms
+ECS auto scaling
+
+Infrastructure changes can be reviewed through Terraform plans before being applied.
 
 
-.
-
-##📁 Project Structure
+# Project Structure
 
 
 autodeployx/
+│
 ├── app.py
 ├── Dockerfile
-├── Jenkinsfile
 ├── README.md
 ├── requirements.txt
-├── terraform/
-└── tests/
+│
+├── tests/
+│
+└── terraform/
+    ├── ecs-service.tf
+    ├── task-definition.tf
+    ├── jenkins.tf
+    ├── jenkins-iam.tf
+    ├── monitoring.tf
+    └── ...
 
 
-##🎯 Project Outcome
 
-AutoDeployX demonstrates a complete DevOps workflow:
+# Security Considerations
 
-GitHub → CI/CD → Automated Testing → Docker → ECR → ECS Fargate → ALB → CloudWatch → Auto Scaling → Self-Healing
+The project uses AWS IAM roles for AWS resource access instead of hard-coding AWS credentials into the application.
 
-The project provides hands-on experience with AWS cloud infrastructure, CI/CD automation, containerization, Infrastructure as Code, monitoring, scaling, and failure recovery.
+Secrets and credentials should not be committed to GitHub.
 
-#👨‍💻 Author
+Terraform state files, environment files, private keys, and access tokens should also be excluded from version control.
+
+
+
+
+# Project Outcome
+
+AutoDeployX demonstrates an end-to-end DevOps workflow:
+
+Code Commit
+     ↓
+Automated Testing
+     ↓
+Docker Build
+     ↓
+Amazon ECR
+     ↓
+Amazon ECS Fargate
+     ↓
+Application Load Balancer
+     ↓
+CloudWatch Monitoring
+     ↓
+Auto Scaling
+     ↓
+Self-Healing
+
+The project demonstrates how AWS cloud services, CI/CD automation, containers, Infrastructure as Code, monitoring, scaling, and automatic task recovery can be combined into a practical DevOps deployment platform.
+
+
+
+
+# Key Learning Outcomes
+
+Through this project, I gained hands-on experience with:
+
+AWS cloud infrastructure
+Terraform Infrastructure as Code
+Jenkins CI/CD pipelines
+Docker containerization
+Amazon ECR
+Amazon ECS Fargate
+Application Load Balancing
+CloudWatch monitoring
+ECS auto scaling
+ECS task recovery
+Application health checks
+CI/CD troubleshooting
+AWS infrastructure troubleshooting
+
+
+#💻 Author
 
 Manikandan
 
-GitHub: tnmanikandan77-collab
+GitHub:https://github.com/tnmanikandan77-collab
